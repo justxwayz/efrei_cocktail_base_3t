@@ -1,0 +1,9 @@
+[tools]
+node = "22"
+
+[env]
+# DOCKER
+DOCKER_DIR="_tools/docker"
+COMPOSE_FILE="docker-compose-local-bdd.yml"
+
+
