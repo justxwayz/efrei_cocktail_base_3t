@@ -10,7 +10,7 @@
         "start": "node -r dotenv/config server.js",
         "test": "jest --setupFiles dotenv/config --runInBand --testPathIgnorePatterns=init_bdd.test.js",
         "test:file": "func() { jest ${1}.test.js --setupFiles dotenv/config; }; func",
-        "test:cov": "jest --setupFiles dotenv/config --runInBand --coverage --testPathIgnorePatterns=init_bdd.test.js"        
+        "test:cov": "jest --setupFiles dotenv/config --runInBand --coverage --testPathIgnorePatterns=init_bdd.test.js"
     },
     "keywords": [],
     "author": "",
@@ -22,6 +22,7 @@
         "express": "^4.19.2",
         "jsonwebtoken": "^9.0.2",
         "mysql2": "^3.9.7",
+        "nodemon": "^3.1.11",
         "sequelize": "^6.37.3"
     },
     "devDependencies": {
