@@ -17,8 +17,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: back-coverage-report
-          path: back/coverage
+          name: backend-coverage-report
+          path: backend/coverage
 
       - name: SonarQube Scan
         uses: SonarSource/sonarcloud-github-action@v3.1.0
