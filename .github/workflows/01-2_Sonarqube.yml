@@ -1,4 +1,4 @@
-name: 01-2 - Integration - Sonarqube
+name: 01-2 - Integration - SONRAQUBE
 
 on:
   workflow_call
@@ -11,7 +11,7 @@ jobs:
         working-directory: ./backend
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: SonarQube Scan
@@ -28,7 +28,7 @@ jobs:
         working-directory: ./frontend
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: SonarQube Scan
