@@ -38,7 +38,7 @@ jobs:
             adminPasswordOrKey=${{ secrets.AZURE_VM_PASSWORD }}
             vmName=jenpeuplus-staging-vm
             location=${{env.ResourceGroupLocation}}
-            vmSize=Standard_B2s
+            vmSize=Standard_DS1_v2
 
 
       - name: Open Port on Security Group
