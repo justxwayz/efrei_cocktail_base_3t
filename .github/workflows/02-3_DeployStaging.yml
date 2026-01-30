@@ -13,38 +13,49 @@ jobs:
       ResourceGroupLocation: "westeurope"
 
     steps:
-      - name: Azure Login
+      - name: 1. Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Azure CLI Create RG
+      - name: 2. Azure CLI Create RG
         uses: azure/CLI@v2
         with:
           inlineScript: |
             az group create --name ${{env.ResourceGroupName}} --location ${{env.ResourceGroupLocation}}
 
+#      - name: 3. Azure CLI Deploy ARM
+#        uses: azure/arm-deploy@v2
+#        with:
+#          resourceGroupName: ${{env.ResourceGroupName}}
+#          scope: resourcegroup
+#          template: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/refs/heads/master/quickstarts/microsoft.compute/vm-simple-linux/azuredeploy.json
+#          parameters: adminUsername=${{ secrets.AZURE_VM_LOGIN }} adminPasswordOrKey=${{ secrets.AZURE_VM_PASSWORD }} vmName=jenpeuplus-staging-vm location=${{ env.ResourceGroupLocation }} vmSize=Standard_B2s
 
-      - name: Azure CLI Deploy ARM
-        uses: azure/arm-deploy@v2
+      - name: 3. Deploy VM via CLI (Sans Template)
+        uses: azure/CLI@v2
         with:
-          resourceGroupName: ${{env.ResourceGroupName}}
-          scope: resourcegroup
-          template: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/refs/heads/master/quickstarts/microsoft.compute/vm-simple-linux/azuredeploy.json
-          parameters: adminUsername=${{ secrets.AZURE_VM_LOGIN }} adminPasswordOrKey=${{ secrets.AZURE_VM_PASSWORD }} vmName=jenpeuplus-staging-vm location=${{ env.ResourceGroupLocation }} vmSize=Standard_B2s
+          inlineScript: |
+            az vm create \
+              --resource-group ${{ env.ResourceGroupName }} \
+              --name "jenpeuplus-staging-vm" \
+              --image Ubuntu2204 \
+              --size Standard_B2s \
+              --admin-username ${{ secrets.AZURE_VM_LOGIN }} \
+              --admin-password ${{ secrets.AZURE_VM_PASSWORD }} \
+              --public-ip-sku Standard \
+              --assign-identity
 
-
-      - name: Open Port on Security Group
+      - name: 4. Open Port on Security Group
         uses: azure/CLI@v2
         with:
           inlineScript: |
             az network nsg rule create --resource-group ${{env.ResourceGroupName}} --nsg-name SecGroupNet --name PortBack-12000 --priority 100 --direction Inbound --access Allow --protocol Tcp --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges 12000
             az network nsg rule create --resource-group ${{env.ResourceGroupName}} --nsg-name SecGroupNet --name PortFront-80 --priority 101 --direction Inbound --access Allow --protocol Tcp --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges 80
 
-
-      - name: Get Public IP et créer règle
+      - name: 5. Get Public IP et créer règle
         if: success()
         uses: azure/CLI@v2
         with:
@@ -53,8 +64,7 @@ jobs:
             az vm show -d -g ${{env.ResourceGroupName}} -n jenpeuplus-staging-vm --query publicIps -o tsv
             echo "AZURE_VM_IP=$(az vm show -d -g ${{env.ResourceGroupName}} -n jenpeuplus-staging-vm --query publicIps -o tsv)" >> $GITHUB_ENV  
 
-
-      - name: Install Docker on VM
+      - name: 6. Install Docker on VM
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{env.AZURE_VM_IP}}
@@ -66,18 +76,16 @@ jobs:
             ls -al
             bash ./install_docker.sh
 
-
-      - name: Set DNS Domain
+      - name: 7. Set DNS Domain
         uses: azure/CLI@v2
         with:
           inlineScript: |
             az network dns record-set a add-record -g JenPeuPlus-DNS -z staging.jenpeuplus.com -n cocktail -a ${{env.AZURE_VM_IP}}
 
-
-      - name: Checkout
+      - name: 8. Checkout
         uses: actions/checkout@v3
 
-      - name: Update compose file
+      - name: 9. Update compose file
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{env.AZURE_VM_IP}}
@@ -88,10 +96,10 @@ jobs:
           source: "./_tools/docker/docker-compose.yml"
           target: "."
 
-      - name: Downcase Image Name
-        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" || ${GITHUB_ENV}
+      - name: 10. Downcase Image Name
+        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
 
-      - name: Start compose file
+      - name: 11. Start compose file
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{env.AZURE_VM_IP}}
