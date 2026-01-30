@@ -23,7 +23,7 @@ jobs:
       - name: Azure CLI Create RG
         uses: azure/CLI@v2
         with:
-          inlineScript: >
+          inlineScript: |
             az group create --name ${{env.ResourceGroupName}} --location ${{env.ResourceGroupLocation}}
 
 
@@ -33,18 +33,13 @@ jobs:
           resourceGroupName: ${{env.ResourceGroupName}}
           scope: resourcegroup
           template: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/refs/heads/master/quickstarts/microsoft.compute/vm-simple-linux/azuredeploy.json
-          parameters: >
-            adminUsername=${{secrets.AZURE_VM_LOGIN}}
-            adminPasswordOrKey=${{ secrets.AZURE_VM_PASSWORD }}
-            vmName=jenpeuplus-staging-vm
-            location=${{env.ResourceGroupLocation}}
-            vmSize=Standard_DS1_v2
+          parameters: adminUsername=${{ secrets.AZURE_VM_LOGIN }} adminPasswordOrKey=${{ secrets.AZURE_VM_PASSWORD }} vmName=jenpeuplus-staging-vm location=${{ env.ResourceGroupLocation }} vmSize=Standard_F2als_v6
 
 
       - name: Open Port on Security Group
         uses: azure/CLI@v2
         with:
-          inlineScript: >
+          inlineScript: |
             az network nsg rule create --resource-group ${{env.ResourceGroupName}} --nsg-name SecGroupNet --name PortBack-12000 --priority 100 --direction Inbound --access Allow --protocol Tcp --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges 12000
             az network nsg rule create --resource-group ${{env.ResourceGroupName}} --nsg-name SecGroupNet --name PortFront-80 --priority 101 --direction Inbound --access Allow --protocol Tcp --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges 80
 
@@ -53,7 +48,7 @@ jobs:
         if: success()
         uses: azure/CLI@v2
         with:
-          inlineScript: >
+          inlineScript: |
             #!/bin/bash
             az vm show -d -g ${{env.ResourceGroupName}} -n jenpeuplus-staging-vm --query publicIps -o tsv
             echo "AZURE_VM_IP=$(az vm show -d -g ${{env.ResourceGroupName}} -n jenpeuplus-staging-vm --query publicIps -o tsv)" >> $GITHUB_ENV  
@@ -66,7 +61,7 @@ jobs:
           port: ${{secrets.AZURE_PORT}}
           username: ${{secrets.AZURE_VM_LOGIN}}
           password: ${{secrets.AZURE_VM_PASSWORD}}
-          script: >
+          script: |
             curl -o install_docker.sh https://raw.githubusercontent.com/azure-custom-cli/scripts/refs/heads/main/install_docker_ubuntu.sh
             ls -al
             bash ./install_docker.sh
@@ -75,7 +70,7 @@ jobs:
       - name: Set DNS Domain
         uses: azure/CLI@v2
         with:
-          inlineScript: >
+          inlineScript: |
             az network dns record-set a add-record -g JenPeuPlus-DNS -z staging.jenpeuplus.com -n cocktail -a ${{env.AZURE_VM_IP}}
 
 
@@ -94,7 +89,7 @@ jobs:
           target: "."
 
       - name: Downcase Image Name
-        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+        run: echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" || ${GITHUB_ENV}
 
       - name: Start compose file
         uses: appleboy/ssh-action@v1.0.3
