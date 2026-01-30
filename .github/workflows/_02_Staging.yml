@@ -29,6 +29,16 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+
+  Deploy_Staging:
+    needs: [Build_Push_Docker]
+    uses: ./.github/workflows/02-3_DeployStaging.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
 
 
 
